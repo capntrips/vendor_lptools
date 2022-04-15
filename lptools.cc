@@ -116,7 +116,7 @@ std::string findGroup(std::unique_ptr<MetadataBuilder>& builder) {
 
 int main(int argc, char **argv) {
     if(argc<=1) {
-        std::cerr << "Usage: " << argv[0] << " <create|remove|resize|replace|map|unmap|free|unlimited-group|clear-cow>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <create|remove|resize|replace|map|unmap|free|unlimited-group|clear-cow|exists|list>" << std::endl;
         exit(1);
     }
     auto builder = makeBuilder();
@@ -304,6 +304,34 @@ int main(int argc, char **argv) {
         }
         saveToDisk(std::move(builder));
         return 0;
+    } else if(strcmp(argv[1], "exists") == 0) {
+        if(argc != 3) {
+            std::cerr << "Usage: " << argv[0] << " exists <partition name>" << std::endl;
+            exit(1);
+        }
+        auto partName = argv[2];
+        auto partition = builder->FindPartition(partName);
+        if(partition != nullptr) {
+            exit(0);
+        } else {
+            exit(1);
+        }
+    } else if(strcmp(argv[1], "list") == 0) {
+        if(argc != 2) {
+            std::cerr << "Usage: " << argv[0] << " list" << std::endl;
+            exit(1);
+        }
+        auto partitions = builder->ListPartitionsInGroup(group);
+        if(partitions.size() > 0) {
+            std::cout << "Found " << partitions.size() << " partitions:" << std::endl;
+            for(const auto& partition : partitions) {
+                std::cout << partition->name() << std::endl;
+            }
+        } else {
+            std::cerr << "No partitions found" << std::endl;
+            exit(1);
+        }
+        exit(0);
     }
 
     return 0;
